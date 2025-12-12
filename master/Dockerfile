@@ -14,6 +14,9 @@ RUN npm install
 # Copiar código fuente
 COPY . .
 
+# Crear directorio config si no existe (para montar volumen)
+RUN mkdir -p /app/config
+
 # Exponer puertos (Web: 8888, gRPC: 50051)
 EXPOSE 8888 50051
 

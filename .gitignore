@@ -20,3 +20,10 @@ venv/
 go.sum
 bin/
 pkg/
+
+# Configuración con API keys reales (NO subir a Git)
+config/api_keys.json
+
+# Mantener solo el ejemplo
+!config/api_keys.example.json
+!config/README.md

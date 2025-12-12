@@ -6,6 +6,7 @@ const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +17,84 @@ const MQTT_BROKER = process.env.MQTT_BROKER || 'mqtt://mosquitto:1883';
 const GRPC_PORT = process.env.GRPC_PORT || '50051';
 const WEB_PORT = process.env.WEB_PORT || '8888';
 const MASTER_HOST = process.env.MASTER_HOST || 'master';
+
+// Cargar configuración de API Keys
+let apiKeysConfig = { keys: [], distribution: { strategy: 'round-robin' } };
+let enabledKeys = [];
+let currentKeyIndex = 0;
+
+function loadApiKeys() {
+  try {
+    const configPath = path.join(__dirname, '../../config/api_keys.json');
+    const configData = fs.readFileSync(configPath, 'utf8');
+    apiKeysConfig = JSON.parse(configData);
+    
+    // Filtrar solo las keys habilitadas
+    enabledKeys = apiKeysConfig.keys.filter(k => k.enabled === true);
+    
+    if (enabledKeys.length === 0) {
+      console.warn('[CONFIG] ⚠️  No hay API keys habilitadas en config/api_keys.json');
+      console.warn('[CONFIG] ⚠️  Usando API key de variable de entorno si está disponible');
+      if (process.env.GEMINI_API_KEY) {
+        enabledKeys = [{
+          id: 'env_key',
+          provider: 'gemini',
+          key: process.env.GEMINI_API_KEY,
+          owner: 'Environment Variable',
+          enabled: true
+        }];
+      }
+    } else {
+      console.log(`[CONFIG] ✅ Cargadas ${enabledKeys.length} API keys:`);
+      enabledKeys.forEach((k, i) => {
+        console.log(`[CONFIG]    ${i + 1}. ${k.id} (${k.provider}) - Owner: ${k.owner}`);
+      });
+      console.log(`[CONFIG] 📊 Estrategia de distribución: ${apiKeysConfig.distribution.strategy}`);
+    }
+  } catch (error) {
+    console.error('[CONFIG] ❌ Error al cargar config/api_keys.json:', error.message);
+    console.warn('[CONFIG] ⚠️  Usando API key de variable de entorno si está disponible');
+    if (process.env.GEMINI_API_KEY) {
+      enabledKeys = [{
+        id: 'env_key',
+        provider: 'gemini',
+        key: process.env.GEMINI_API_KEY,
+        owner: 'Environment Variable',
+        enabled: true
+      }];
+    }
+  }
+}
+
+// Obtener la siguiente API key según estrategia
+function getNextApiKey() {
+  if (enabledKeys.length === 0) {
+    console.warn('[CONFIG] ⚠️  No hay API keys disponibles');
+    return '';
+  }
+
+  const strategy = apiKeysConfig.distribution?.strategy || 'round-robin';
+  
+  let selectedKey;
+  switch (strategy) {
+    case 'random':
+      const randomIndex = Math.floor(Math.random() * enabledKeys.length);
+      selectedKey = enabledKeys[randomIndex];
+      break;
+    
+    case 'round-robin':
+    default:
+      selectedKey = enabledKeys[currentKeyIndex % enabledKeys.length];
+      currentKeyIndex++;
+      break;
+  }
+  
+  console.log(`[CONFIG] 🔑 Usando API key: ${selectedKey.id} (${selectedKey.owner})`);
+  return selectedKey.key;
+}
+
+// Cargar keys al iniciar
+loadApiKeys();
 
 // Cargar proto de gRPC
 const PROTO_PATH = path.join(__dirname, '../../proto/worker.proto');
@@ -182,11 +261,14 @@ function assignNextTask() {
 function assignTaskToWorker(workerId, task) {
   workers.get(workerId).status = 'busy';
   
+  // Si el usuario no proporcionó API key, usar del pool
+  const apiKey = task.apiKey || getNextApiKey();
+  
   const taskMessage = {
     worker_id: workerId,
     session_id: task.sessionId,
     query: task.query,
-    api_key: task.apiKey,
+    api_key: apiKey,
     grpc_endpoint: `${MASTER_HOST}:${GRPC_PORT}`,
     timestamp: task.timestamp
   };
@@ -233,9 +315,6 @@ io.on('connection', (socket) => {
   
   console.log(`[WEB] Nueva sesión: ${sessionId}`);
   publishLog(`Nueva sesión web conectada: ${sessionId}`);
-  
-  socket.emit('session-id', sessionId);
-  
   socket.on('user-query', (data) => {
     const { query, apiKey } = data;
     console.log(`[QUERY] Sesión ${sessionId}: ${query}`);
@@ -243,6 +322,9 @@ io.on('connection', (socket) => {
     const task = {
       sessionId,
       query,
+      apiKey: apiKey || '', // Si está vacío, se usará del pool en assignTaskToWorker
+      timestamp: Date.now()
+    };query,
       apiKey: apiKey || process.env.GEMINI_API_KEY || '',
       timestamp: Date.now()
     };

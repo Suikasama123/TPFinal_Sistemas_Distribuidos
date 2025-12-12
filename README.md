@@ -117,13 +117,50 @@ App(8888): 31663
 
 ## 🛠️ Instalación y Deployment
 
-### 1. Inicializar Docker Swarm (si no está activo)
+### 1. Configurar API Keys de Gemini
+
+Cada miembro del grupo debe obtener una API key:
+
+1. Ir a https://aistudio.google.com/api-keys
+2. Crear una nueva API key
+3. Editar el archivo `config/api_keys.json`:
+
+```bash
+# Copiar el ejemplo si no existe
+cp config/api_keys.example.json config/api_keys.json
+
+# Editar y reemplazar las keys
+nano config/api_keys.json
+```
+
+```json
+{
+  "ai_provider": "gemini",
+  "keys": [
+    {
+      "id": "key_1",
+      "provider": "gemini",
+      "key": "AIzaSy...",  ← Tu key aquí
+      "owner": "Miembro 1",
+      "enabled": true
+    }
+    // ... más keys
+  ]
+}
+```
+
+**Validar las keys:**
+```bash
+./validate_keys.sh
+```
+
+### 2. Inicializar Docker Swarm (si no está activo)
 
 ```bash
 docker swarm init
 ```
 
-### 2. Construir y Subir Imágenes al Registry
+### 3. Construir y Subir Imágenes al Registry
 
 ```bash
 ./build.sh
@@ -133,7 +170,7 @@ Este script:
 - Construye las imágenes de Master y los 3 Workers
 - Sube las imágenes al registry privado (10.1.2.166:5000)
 
-### 3. Desplegar el Stack en Swarm
+### 4. Desplegar el Stack en Swarm
 
 ```bash
 ./deploy.sh
@@ -144,7 +181,7 @@ Este script:
 - Despliega todos los servicios en Docker Swarm
 - Muestra el estado de los servicios
 
-### 4. Acceder a la Aplicación
+### 5. Acceder a la Aplicación
 
 Abre tu navegador en:
 ```

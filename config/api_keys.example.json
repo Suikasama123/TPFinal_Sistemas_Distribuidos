@@ -1,0 +1,37 @@
+{
+  "ai_provider": "gemini",
+  "keys": [
+    {
+      "id": "key_1",
+      "provider": "gemini",
+      "key": "REEMPLAZAR_CON_KEY_MIEMBRO_1",
+      "owner": "Miembro 1",
+      "enabled": true
+    },
+    {
+      "id": "key_2",
+      "provider": "gemini",
+      "key": "REEMPLAZAR_CON_KEY_MIEMBRO_2",
+      "owner": "Miembro 2",
+      "enabled": true
+    },
+    {
+      "id": "key_3",
+      "provider": "gemini",
+      "key": "REEMPLAZAR_CON_KEY_MIEMBRO_3",
+      "owner": "Miembro 3",
+      "enabled": true
+    },
+    {
+      "id": "key_4",
+      "provider": "gemini",
+      "key": "REEMPLAZAR_CON_KEY_MIEMBRO_4",
+      "owner": "Miembro 4",
+      "enabled": true
+    }
+  ],
+  "distribution": {
+    "strategy": "round-robin",
+    "fallback_on_error": true
+  }
+}
