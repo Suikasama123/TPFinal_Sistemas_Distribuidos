@@ -62,7 +62,9 @@ services:
     networks:
       - ai-network
     deploy:
-      replicas: 2
+      replicas: 4  # 4 replicas = 1 por nodo (4 miembros del grupo)
+      placement:
+        max_replicas_per_node: 1  # Máximo 1 por nodo para distribución
       restart_policy:
         condition: on-failure
 
@@ -78,10 +80,10 @@ services:
     networks:
       - ai-network
     deploy:
-      replicas: 2
+      replicas: 4  # 4 replicas = 1 por nodo (4 miembros del grupo)
+      placement:
+        max_replicas_per_node: 1  # Máximo 1 por nodo para distribución
       restart_policy:
-        condition: on-failure
-
   # Worker Java
   worker-java:
     image: 10.1.2.166:5000/worker-java:latest
@@ -94,7 +96,11 @@ services:
     networks:
       - ai-network
     deploy:
-      replicas: 2
+      replicas: 4  # 4 replicas = 1 por nodo (4 miembros del grupo)
+      placement:
+        max_replicas_per_node: 1  # Máximo 1 por nodo para distribución
+      restart_policy:
+        condition: on-failure
       restart_policy:
         condition: on-failure
 
