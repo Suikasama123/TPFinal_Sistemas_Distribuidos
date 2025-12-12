@@ -1,5 +1,19 @@
 # 🔑 Guía Rápida: Configuración de API Keys
 
+## ⚠️ IMPORTANTE: Docker Swarm
+
+Este proyecto usa Docker Swarm. Las API keys se **incluyen en la imagen Docker** durante el build.
+
+**Esto significa:**
+- ✅ Editar `config/api_keys.json` ANTES de `./build.sh`
+- ✅ Funciona en cualquier nodo del Swarm
+- ✅ No necesita volúmenes compartidos
+- ⚠️ Para cambiar keys, debes rebuild la imagen
+
+📖 **Ver detalles:** `SWARM_API_KEYS.md`
+
+---
+
 ## ⚡ Configuración en 3 Pasos
 
 ### 1️⃣ Copiar el archivo de configuración

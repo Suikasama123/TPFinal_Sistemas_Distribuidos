@@ -24,7 +24,20 @@ build_and_push() {
     local image="${REGISTRY}/${service}:latest"
     
     echo -e "\n${YELLOW}[${service}] Construyendo imagen...${NC}"
+    
+    # Para el master, copiar config temporalmente
+    if [ "$service" == "master" ]; then
+        echo -e "${YELLOW}[${service}] Copiando configuración...${NC}"
+        mkdir -p master/config
+        cp -r config/* master/config/ 2>/dev/null || true
+    fi
+    
     docker build -t ${image} ${context}
+    
+    # Limpiar archivos temporales del master
+    if [ "$service" == "master" ]; then
+        rm -rf master/config
+    fi
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}[${service}] Imagen construida exitosamente${NC}"

@@ -26,14 +26,18 @@ services:
     ports:
       - "31663:8888"    # Web App
       - "50051:50051"   # gRPC
-    volumes:
-      - ./config:/app/config:ro  # Montar config como solo lectura
     environment:
       - MQTT_BROKER=mosquitto
       - MQTT_PORT=1883
       - GRPC_PORT=50051
       - WEB_PORT=8888
       - MASTER_HOST=master
+      # API Keys como variables de entorno (alternativa al archivo)
+      # Descomenta y configura si prefieres usar env vars
+      # - GEMINI_API_KEY_1=tu_key_1
+      # - GEMINI_API_KEY_2=tu_key_2
+      # - GEMINI_API_KEY_3=tu_key_3
+      # - GEMINI_API_KEY_4=tu_key_4
     depends_on:
       - mosquitto
     networks:
