@@ -1,4 +1,29 @@
-mosquitto/data/
-mosquitto/log/
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.class
+*.jar
+target/
+build/
+dist/
 *.log
-*.tar.gz
+.env
+.venv
+venv/
+*.swp
+*.swo
+.DS_Store
+.idea/
+.vscode/
+*.iml
+go.sum
+bin/
+pkg/
+
+# Configuración con API keys reales (NO subir a Git)
+config/api_keys.json
+
+# Mantener solo el ejemplo
+!config/api_keys.example.json
+!config/README.md

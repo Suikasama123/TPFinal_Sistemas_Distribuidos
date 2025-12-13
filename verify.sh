@@ -71,8 +71,8 @@ fi
 
 # 7. Verificar puerto web
 echo -e "\n${YELLOW}Verificando acceso web:${NC}"
-if curl -s -o /dev/null -w "%{http_code}" http://10.1.2.179:31793 | grep -q "200"; then
-    echo -e "${GREEN}✓ Web App accesible en http://10.1.2.179:31793${NC}"
+if curl -s -o /dev/null -w "%{http_code}" http://10.1.2.166:31663 | grep -q "200"; then
+    echo -e "${GREEN}✓ Web App accesible en http://10.1.2.166:31663${NC}"
 else
     echo -e "${RED}✗ Web App no accesible${NC}"
     ERRORS=$((ERRORS + 1))
@@ -95,7 +95,7 @@ echo -e "\n${BLUE}========================================${NC}"
 if [ $ERRORS -eq 0 ]; then
     echo -e "${GREEN}✓ Todos los componentes funcionando correctamente${NC}"
     echo -e "\n${YELLOW}Acceso a la aplicación:${NC}"
-    echo -e "${GREEN}http://10.1.2.179:31793${NC}"
+    echo -e "${GREEN}http://10.1.2.166:31663${NC}"
     echo -e "\n${YELLOW}Comandos útiles:${NC}"
     echo -e "./logs.sh          - Ver logs de servicios"
     echo -e "./monitor.sh       - Monitoreo en tiempo real"

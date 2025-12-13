@@ -1,0 +1,1 @@
+Apellidos: OCHOA MOLINA, Nombres: CARLOS DANIEL, Node: 10.1.2.179, ssh(22): 11791, MQTT(1883):21792, App(8888):31793, daemon: OK

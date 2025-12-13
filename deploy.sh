@@ -43,7 +43,7 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}  Deployment completado${NC}"
     echo -e "${GREEN}========================================${NC}"
     echo -e "${YELLOW}Accede a la aplicación web en:${NC}"
-    echo -e "${GREEN}http://10.1.2.179:31793${NC}"
+    echo -e "${GREEN}http://10.1.2.166:31663${NC}"
     echo -e "\n${YELLOW}Para ver los logs:${NC}"
     echo -e "docker service logs -f ${STACK_NAME}_master"
     echo -e "docker service logs -f ${STACK_NAME}_worker-python"

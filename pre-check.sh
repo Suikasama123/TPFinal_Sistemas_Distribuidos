@@ -90,8 +90,8 @@ fi
 
 # 4. Verificar Registry
 echo -e "\n${CYAN}[4/8] Verificando Docker Registry...${NC}"
-if curl -s http://10.1.2.179:5000/v2/_catalog > /dev/null 2>&1; then
-    check_ok "Registry accesible en 10.1.2.179:5000"
+if curl -s http://10.1.2.166:5000/v2/_catalog > /dev/null 2>&1; then
+    check_ok "Registry accesible en 10.1.2.166:5000"
 else
     check_warning "Registry no accesible. Puede necesitar iniciarse en el nodo manager"
 fi
@@ -149,10 +149,10 @@ fi
 
 # 8. Verificar conectividad de red
 echo -e "\n${CYAN}[8/8] Verificando conectividad...${NC}"
-if ping -c 1 10.1.2.179 > /dev/null 2>&1; then
-    check_ok "Conectividad con 10.1.2.179"
+if ping -c 1 10.1.2.166 > /dev/null 2>&1; then
+    check_ok "Conectividad con 10.1.2.166"
 else
-    check_warning "No se puede hacer ping a 10.1.2.179"
+    check_warning "No se puede hacer ping a 10.1.2.166"
 fi
 
 # Resumen final

@@ -1,363 +1,477 @@
-# 📦 Cluster Swarm - Archivos para Deployment
+# Sistema Distribuido Master/Slave con IA
 
-## 📋 CONTENIDO DE ESTA CARPETA
+## 📋 Descripción del Proyecto
 
-Esta carpeta contiene **TODOS** los archivos necesarios para inicializar y desplegar el sistema distribuido en el cluster.
+Sistema distribuido de tipo Master-Slave implementado con **Docker Swarm** que permite realizar consultas a la API de **Google Gemini** de manera asíncrona. El sistema utiliza **MQTT** para la distribución de tareas a los Workers y **gRPC** para el envío de resultados mediante callbacks al Master.
 
----
+### Componentes Principales
 
-## 📁 ESTRUCTURA DE ARCHIVOS
+- **Master (NodeJS)**: Servidor web con Socket.IO, gestión de tareas, broker MQTT y servidor gRPC
+- **Worker Python**: Procesador de tareas implementado en Python
+- **Worker Go**: Procesador de tareas implementado en Go
+- **Worker Java**: Procesador de tareas implementado en Java
+- **Mosquitto**: Broker MQTT para comunicación asíncrona
+- **Web App**: Interfaz de usuario tipo chat para interactuar con el sistema
 
-### 🔧 Scripts de Deployment (Ejecutables)
+## 🏗️ Arquitectura
+
 ```
-swarm-init.sh       → Inicializar Docker Swarm (EJECUTAR PRIMERO)
-build.sh            → Construir imágenes Docker
-deploy.sh           → Desplegar el sistema en el cluster
-stop.sh             → Detener todos los servicios
-```
-
-### 📊 Scripts de Verificación
-```
-pre-check.sh        → Verificar que todo está listo antes de desplegar
-verify.sh           → Verificar estado del sistema
-verify-multinode.sh → Verificar distribución multi-nodo
-```
-
-### 🔍 Scripts de Monitoreo
-```
-logs.sh             → Ver logs de servicios
-monitor.sh          → Monitorear sistema en tiempo real
-scale.sh            → Escalar número de workers
-```
-
-### 📂 Directorios de Código
-```
-master/             → Código del Master (NodeJS)
-  ├── src/server.js
-  ├── public/index.html
-  ├── package.json
-  └── Dockerfile
-
-worker-python/      → Worker en Python
-  ├── worker.py
-  ├── requirements.txt
-  └── Dockerfile
-
-worker-go/          → Worker en Go
-  ├── main.go
-  ├── go.mod
-  └── Dockerfile
-
-worker-java/        → Worker en Java
-  ├── src/
-  ├── pom.xml
-  └── Dockerfile
-
-proto/              → Definiciones gRPC
-  └── worker.proto
-
-mosquitto/          → Configuración de MQTT
-  └── config/mosquitto.conf
-
-config/             → Configuración del sistema
-  └── api_keys.json  ← ✅ CON TUS 4 KEYS DE DEEPSEEK
+┌─────────────┐
+│ Web Browser │ (Socket.IO)
+└──────┬──────┘
+       │ 3XXX3
+       ▼
+┌──────────────────────────────────────────┐
+│            Master (NodeJS)               │
+│  ┌──────────┐  ┌────────┐  ┌─────────┐ │
+│  │ Socket.IO│  │ gRPC   │  │  MQTT   │ │
+│  │  Server  │  │ Server │  │ Client  │ │
+│  └──────────┘  └────────┘  └─────────┘ │
+└───────────┬──────────────────────────────┘
+            │ MQTT (2XXX2)
+            ▼
+   ┌─────────────────┐
+   │  Mosquitto MQTT │
+   └────────┬────────┘
+            │
+    ┌───────┴───────┬───────────┐
+    │               │           │
+    ▼               ▼           ▼
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│ Worker   │  │ Worker   │  │ Worker   │
+│ (Python) │  │  (Go)    │  │ (Java)   │
+└────┬─────┘  └────┬─────┘  └────┬─────┘
+     │             │             │
+     └─────────────┴─────────────┘
+              gRPC Callback
 ```
 
-### 📄 Archivo de Configuración Principal
+## 🚀 Características
+
+- ✅ **Sistema Asíncrono**: Los usuarios no esperan la respuesta, se notifican cuando está lista
+- ✅ **Multi-Worker**: 3 tipos de workers en diferentes lenguajes (Python, Go, Java)
+- ✅ **Escalabilidad**: Fácil escalamiento de workers con Docker Swarm
+- ✅ **Load Balancing**: Distribución automática de tareas entre workers disponibles
+- ✅ **Múltiples Usuarios**: Soporte para múltiples sesiones simultáneas
+- ✅ **Logging Centralizado**: Todos los eventos se registran en el tópico MQTT `upb/logs`
+- ✅ **Simulación de Procesamiento**: 10 segundos de delay para simular procesamiento largo
+- ✅ **Callbacks gRPC**: Comunicación eficiente entre Workers y Master
+
+## 📁 Estructura del Proyecto
+
 ```
-docker-compose.yml  → Define todos los servicios del cluster
+TPFinal_Sistemas_Distribuidos/
+├── master/                      # Master Server (NodeJS)
+│   ├── src/
+│   │   └── server.js           # Servidor principal
+│   ├── public/
+│   │   └── index.html          # Web App
+│   ├── package.json
+│   └── Dockerfile
+├── worker-python/               # Worker en Python
+│   ├── worker.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── worker-go/                   # Worker en Go
+│   ├── main.go
+│   ├── go.mod
+│   └── Dockerfile
+├── worker-java/                 # Worker en Java
+│   ├── src/
+│   │   └── main/java/upb/distribuidos/
+│   │       └── Worker.java
+│   ├── pom.xml
+│   └── Dockerfile
+├── proto/
+│   └── worker.proto            # Definición gRPC
+├── mosquitto/
+│   └── config/
+│       └── mosquitto.conf      # Configuración MQTT
+├── docker-compose.yml          # Configuración de Swarm
+├── build.sh                    # Script de construcción
+├── deploy.sh                   # Script de despliegue
+├── stop.sh                     # Script para detener
+├── logs.sh                     # Ver logs
+├── scale.sh                    # Escalar workers
+├── monitor.sh                  # Monitoreo en tiempo real
+└── README.md
 ```
 
----
+## 🔧 Requisitos Previos
 
-## 🚀 ORDEN DE EJECUCIÓN
+- Docker y Docker Compose instalados
+- Docker Swarm inicializado
+- Acceso al cluster con la información en `cluster_information.txt`
+- API Keys de Google Gemini (https://aistudio.google.com/api-keys)
 
-### 1️⃣ INICIALIZAR SWARM (SOLO EN MANAGER)
+## 📦 Información del Cluster Asignado
+
+```
+Apellidos: OCHOA MOLINA
+Nombres: CARLOS DANIEL
+Node: 10.1.2.166
+ssh(22): 11661
+MQTT(1883): 21662
+App(8888): 31663
+```
+
+## 🛠️ Instalación y Deployment
+
+### 1. Configurar API Keys de Gemini
+
+Cada miembro del grupo debe obtener una API key:
+
+1. Ir a https://aistudio.google.com/api-keys
+2. Crear una nueva API key
+3. Editar el archivo `config/api_keys.json`:
+
 ```bash
-cd ~/Desktop/cluster_swarm
-./swarm-init.sh
+# Copiar el ejemplo si no existe
+cp config/api_keys.example.json config/api_keys.json
+
+# Editar y reemplazar las keys
+nano config/api_keys.json
 ```
 
-**Output:** Te dará un token como:
-```
-docker swarm join --token SWMTKN-1-xxxxx... 10.1.2.166:2377
-```
-
-**Acción:** Copia ese comando y envíaselo a tus 3 compañeros.
-
----
-
-### 2️⃣ TUS COMPAÑEROS EJECUTAN (EN SUS MÁQUINAS)
-```bash
-docker swarm join --token SWMTKN-1-xxxxx... 10.1.2.166:2377
-```
-
----
-
-### 3️⃣ VERIFICAR CLUSTER (EN MANAGER)
-```bash
-docker node ls
-```
-
-**Deberías ver 4 nodos con STATUS=Ready**
-
----
-
-### 4️⃣ BUILD DE IMÁGENES (EN MANAGER)
-```bash
-./build.sh
-```
-
-**Tiempo:** 5-15 minutos la primera vez.
-
-**Qué hace:**
-- Construye imagen del Master
-- Construye imagen de Worker Python
-- Construye imagen de Worker Go
-- Construye imagen de Worker Java
-- Sube todas las imágenes al registry (10.1.2.166:5000)
-
----
-
-### 5️⃣ DEPLOY EN CLUSTER (EN MANAGER)
-```bash
-./deploy.sh
-```
-
-**Tiempo:** 1-2 minutos.
-
-**Qué hace:**
-- Despliega Master en nodo manager
-- Despliega Mosquitto en nodo manager
-- Distribuye 12 workers (3 tipos × 4 nodos)
-- Configura red overlay automáticamente
-
----
-
-### 6️⃣ VERIFICAR DEPLOYMENT (EN MANAGER)
-```bash
-./verify-multinode.sh
-```
-
-**Output esperado:**
-```
-✅ Número de nodos: 4
-✅ Workers Python distribuidos en 4 nodos
-✅ Workers Go distribuidos en 4 nodos
-✅ Workers Java distribuidos en 4 nodos
-```
-
----
-
-### 7️⃣ ACCEDER A LA APLICACIÓN
-```
-http://10.1.2.166:31793
-```
-
----
-
-## ⚙️ CONFIGURACIÓN INCLUIDA
-
-### ✅ API Keys de DeepSeek (config/api_keys.json)
 ```json
 {
+  "ai_provider": "gemini",
   "keys": [
-    { "key": "sk-512624ee943045bdb9bd025191c9105f" },
-    { "key": "sk-2253fe52a184456390e8c715c33abf0d" },
-    { "key": "sk-a5d8adf586c14b5fa13931e7388a2159" },
-    { "key": "sk-04137d3592ec41bf97ffbbfb3e8ab967" }
+    {
+      "id": "key_1",
+      "provider": "gemini",
+      "key": "AIzaSy...",  ← Tu key aquí
+      "owner": "Miembro 1",
+      "enabled": true
+    }
+    // ... más keys
   ]
 }
 ```
 
-**Las 4 keys ya están configuradas y listas para usar.**
-
----
-
-## 🔍 VERIFICACIÓN RÁPIDA
-
-Antes de empezar, ejecuta:
+**Validar las keys:**
 ```bash
-./pre-check.sh
+./validate_keys.sh
 ```
 
-Esto verifica:
-- ✅ Docker instalado
-- ✅ API keys configuradas
-- ✅ Archivos presentes
-- ✅ Permisos correctos
-- ✅ Espacio en disco
+### 2. Inicializar Docker Swarm (si no está activo)
 
----
+```bash
+docker swarm init
+```
 
-## 📊 MONITOREO
+### 3. Construir y Subir Imágenes al Registry
 
-### Ver estado de servicios:
+```bash
+./build.sh
+```
+
+Este script:
+- Construye las imágenes de Master y los 3 Workers
+- Sube las imágenes al registry privado (10.1.2.166:5000)
+
+### 4. Desplegar el Stack en Swarm
+
+```bash
+./deploy.sh
+```
+
+Este script:
+- Crea los directorios necesarios
+- Despliega todos los servicios en Docker Swarm
+- Muestra el estado de los servicios
+
+### 5. Acceder a la Aplicación
+
+Abre tu navegador en:
+```
+http://10.1.2.166:31663
+```
+
+## 📖 Uso del Sistema
+
+### Interfaz Web
+
+1. **Conectar**: Al abrir la aplicación, se crea automáticamente una sesión
+2. **API Key**: (Opcional) Ingresa tu API Key de Gemini en el campo superior
+3. **Consulta**: Escribe tu pregunta en el campo de texto
+4. **Enviar**: Presiona el botón "Enviar" o Enter
+5. **Esperar**: La consulta se asigna a un worker disponible
+6. **Respuesta**: Después de ~10 segundos, recibirás la respuesta de la IA
+
+### Mensajes MQTT
+
+El sistema utiliza los siguientes tópicos MQTT:
+
+- `upb/workers/register`: Registro de nuevos workers
+- `upb/workers/status`: Estado de workers (idle/busy)
+- `upb/workers/{worker_id}/tasks`: Tareas asignadas a cada worker
+- `upb/logs`: Logs centralizados del sistema
+
+### Formato de Mensajes
+
+**Tarea enviada al Worker (MQTT):**
+```json
+{
+  "worker_id": "python-worker-abc123",
+  "session_id": "550e8400-e29b-41d4-a716-446655440000",
+  "query": "¿Qué es Docker Swarm?",
+  "api_key": "AIza...",
+  "grpc_endpoint": "master:50051",
+  "timestamp": 1702345678901
+}
+```
+
+**Resultado enviado al Master (gRPC):**
+```protobuf
+TaskResult {
+  worker_id: "python-worker-abc123"
+  session_id: "550e8400-e29b-41d4-a716-446655440000"
+  original_query: "¿Qué es Docker Swarm?"
+  ai_response: "Docker Swarm es..."
+  api_key: "AIza..."
+  processing_time_ms: 10245
+  query_timestamp: 1702345678901
+  completion_timestamp: 1702345689146
+}
+```
+
+## 🔍 Comandos de Administración
+
+### Ver Estado de Servicios
+
 ```bash
 docker stack services ai-system
 ```
 
-### Ver logs en tiempo real:
+### Ver Logs
+
 ```bash
+# Script interactivo
 ./logs.sh
-# O específicamente:
+
+# O directamente
 docker service logs -f ai-system_master
 docker service logs -f ai-system_worker-python
+docker service logs -f ai-system_worker-go
+docker service logs -f ai-system_worker-java
 ```
 
-### Ver recursos:
+### Escalar Workers
+
+```bash
+# Escalar workers de Python a 5 réplicas
+./scale.sh worker-python 5
+
+# Escalar workers de Go a 3 réplicas
+./scale.sh worker-go 3
+```
+
+### Monitorear el Sistema
+
 ```bash
 ./monitor.sh
 ```
 
-### Ver distribución por nodo:
-```bash
-docker service ps ai-system_worker-python
-docker service ps ai-system_worker-go
-docker service ps ai-system_worker-java
-```
+Actualiza cada 5 segundos mostrando:
+- Estado de los servicios
+- Tareas/contenedores en ejecución
+- Distribución en los nodos
 
----
+### Detener el Sistema
 
-## 🛠️ COMANDOS ÚTILES
-
-### Escalar workers:
-```bash
-./scale.sh worker-python 8  # Aumenta a 8 réplicas
-```
-
-### Detener todo:
 ```bash
 ./stop.sh
 ```
 
-### Re-desplegar después de cambios:
+### Ver Tareas en Ejecución
+
 ```bash
-./stop.sh
-sleep 10
-./build.sh    # Solo si cambiaste código
-./deploy.sh
+docker stack ps ai-system
 ```
 
-### Ver logs de un nodo específico:
+### Inspeccionar un Servicio
+
 ```bash
-# En el nodo worker
-docker ps                    # Ver containers locales
-docker logs <container-id>   # Ver logs de un container
-```
-
----
-
-## 🎯 ARQUITECTURA DESPLEGADA
-
-```
-NODO MANAGER (10.1.2.166) - TÚ:
-├── Master (NodeJS) - Puerto 31663
-├── Mosquitto (MQTT) - Puerto 21662
-├── Worker Python (1 réplica)
-├── Worker Go (1 réplica)
-└── Worker Java (1 réplica)
-
-NODO WORKER 2 (10.1.2.163):
-├── Worker Python (1 réplica)
-├── Worker Go (1 réplica)
-└── Worker Java (1 réplica)
-
-NODO WORKER 3 (10.1.2.178):
-├── Worker Python (1 réplica)
-├── Worker Go (1 réplica)
-└── Worker Java (1 réplica)
-
-NODO WORKER 4 (10.1.2.173):
-├── Worker Python (1 réplica)
-├── Worker Go (1 réplica)
-└── Worker Java (1 réplica)
-
-TOTAL: 1 Master + 1 MQTT + 12 Workers
-```
-
----
-
-## ⚠️ IMPORTANTE
-
-### Solo TÚ ejecutas en el nodo manager:
-- `./swarm-init.sh` ✅
-- `./build.sh` ✅
-- `./deploy.sh` ✅
-- Todos los scripts de verificación y monitoreo ✅
-
-### Tus compañeros solo ejecutan:
-- `docker swarm join --token ... IP:2377` ✅
-- Nada más (Swarm distribuye todo automáticamente) ✅
-
----
-
-## 📞 TROUBLESHOOTING
-
-### Si algo falla:
-```bash
-# Ver logs del master
-docker service logs ai-system_master | tail -50
-
-# Ver logs de workers
-docker service logs ai-system_worker-python | tail -50
-
-# Reiniciar todo
-./stop.sh
-sleep 15
-./deploy.sh
-```
-
-### Si workers no se registran:
-```bash
-# Verificar conectividad
-docker service inspect ai-system_mosquitto
 docker service inspect ai-system_master
+docker service inspect ai-system_worker-python
+```
 
-# Ver estado de la red
+## 🔬 Flujo de Procesamiento
+
+1. **Usuario envía consulta** → Socket.IO → Master
+2. **Master valida workers disponibles**
+   - Si hay worker idle → Asigna tarea inmediatamente
+   - Si no → Agrega a cola de pendientes
+3. **Master publica tarea** → MQTT → Worker específico
+4. **Worker recibe tarea**
+   - Cambia estado a "busy"
+   - Consulta a Gemini API
+   - Simula 10 segundos de procesamiento
+   - Prepara resultado
+5. **Worker envía resultado** → gRPC → Master
+6. **Master recibe resultado**
+   - Busca sesión del usuario
+   - Envía respuesta vía Socket.IO
+   - Marca worker como "idle"
+7. **Usuario recibe respuesta** en la interfaz web
+
+## 🧪 Verificación del Sistema
+
+### 1. Verificar que todos los servicios estén corriendo
+
+```bash
+docker stack services ai-system
+```
+
+Todos los servicios deben mostrar REPLICAS en formato X/X (ej: 2/2)
+
+### 2. Verificar logs del Master
+
+```bash
+docker service logs ai-system_master | tail -50
+```
+
+Buscar mensajes como:
+- `[WEB] Servidor web escuchando en puerto 8888`
+- `[MQTT] Conectado al broker`
+- `[GRPC] Servidor escuchando en puerto 50051`
+
+### 3. Verificar registro de Workers
+
+```bash
+docker service logs ai-system_worker-python | grep "registrado"
+```
+
+Deberías ver mensajes de registro exitoso.
+
+### 4. Probar una consulta
+
+1. Abre http://10.1.2.166:31663
+2. Ingresa tu API Key de Gemini
+3. Escribe: "Hola, ¿cómo estás?"
+4. Espera ~10 segundos
+5. Deberías recibir una respuesta
+
+## 🐛 Troubleshooting
+
+### Problema: Los workers no se registran
+
+**Solución:**
+```bash
+# Verificar que Mosquitto esté corriendo
+docker service ps ai-system_mosquitto
+
+# Reiniciar el stack
+./stop.sh
+./deploy.sh
+```
+
+### Problema: No hay respuesta de la IA
+
+**Causa común:** API Key inválida o límite de tasa excedido
+
+**Solución:**
+- Verifica tu API Key en https://aistudio.google.com/api-keys
+- Genera una nueva API Key si es necesario
+- Verifica logs del worker: `docker service logs ai-system_worker-python | grep "Error"`
+
+### Problema: El Master no recibe callbacks
+
+**Solución:**
+```bash
+# Verificar que el servidor gRPC esté escuchando
+docker service logs ai-system_master | grep "GRPC"
+
+# Verificar conectividad de red
 docker network inspect ai-system_ai-network
 ```
 
----
+### Problema: Construcción de imagen falla
 
-## ✅ CHECKLIST DE DEPLOYMENT
+**Para Go:**
+```bash
+cd worker-go
+go mod tidy
+go mod download
+```
 
-- [ ] Subir esta carpeta al cluster (10.1.2.166)
-- [ ] `cd cluster_swarm`
-- [ ] `./pre-check.sh` (verificar)
-- [ ] `./swarm-init.sh` (generar token)
-- [ ] Compartir token con compañeros
-- [ ] Verificar 4 nodos: `docker node ls`
-- [ ] `./build.sh` (construir imágenes)
-- [ ] `./deploy.sh` (desplegar)
-- [ ] `./verify-multinode.sh` (verificar)
-- [ ] Acceder: http://10.1.2.166:31793
-- [ ] Probar consulta a DeepSeek
+**Para Java:**
+```bash
+cd worker-java
+mvn clean install
+```
 
----
+## 📊 Escalabilidad
 
-## 🎉 ¡LISTO!
+El sistema está diseñado para escalar horizontalmente:
 
-Esta carpeta contiene **TODO** lo necesario para desplegar el sistema.
+```bash
+# Escalar a 10 workers de Python
+./scale.sh worker-python 10
 
-**Solo necesitas:**
-1. Subirla al cluster
-2. Ejecutar los scripts en orden
-3. ¡Disfrutar del sistema funcionando!
+# Escalar a 5 workers de Go
+./scale.sh worker-go 5
 
-**Las API keys de DeepSeek ya están configuradas.**
-**No necesitas editar nada más.**
+# Escalar a 3 workers de Java
+./scale.sh worker-java 3
+```
 
----
+Cada worker:
+- Se registra automáticamente
+- Recibe su propio tópico MQTT
+- Procesa tareas de forma independiente
+- Envía resultados directamente al Master
 
-## 📚 ARCHIVOS DE REFERENCIA
+## 🔐 Seguridad
 
-En el directorio original hay más documentación:
-- `ARQUITECTURA_DEPLOYMENT.md` - Arquitectura detallada
-- `DEEPSEEK_SETUP.md` - Guía de DeepSeek
-- `INICIO_RAPIDO.md` - Guía rápida
-- `TROUBLESHOOTING.md` - Solución de problemas
+**Recomendaciones:**
+- No commitear API Keys en el repositorio
+- Usar variables de entorno para configuración sensible
+- Implementar autenticación en MQTT en producción
+- Usar TLS para comunicaciones gRPC en producción
 
----
+## 📝 Logs Centralizados
 
-**¡Proyecto listo para deployment! 🚀**
+Todos los componentes publican logs en `upb/logs`:
+
+```bash
+# Suscribirse a logs en tiempo real
+mosquitto_sub -h 10.1.2.166 -p 21662 -t "upb/logs" -v
+```
+
+## 🎯 Funcionalidades Implementadas
+
+- ✅ Arquitectura Master-Slave distribuida
+- ✅ Comunicación MQTT para distribución de tareas
+- ✅ Callbacks gRPC para resultados
+- ✅ Web App con Socket.IO para múltiples usuarios
+- ✅ Workers en 3 lenguajes diferentes (Python, Go, Java)
+- ✅ Integración con Google Gemini API
+- ✅ Simulación de procesamiento largo (10s)
+- ✅ Sistema de registro y estado de workers
+- ✅ Cola de tareas pendientes
+- ✅ Logging centralizado en MQTT
+- ✅ Docker Swarm para deployment distribuido
+- ✅ Registry privado para imágenes
+- ✅ Scripts de automatización
+
+## 👥 Autores
+
+**Carlos Daniel Ochoa Molina**
+- Node: 10.1.2.166
+- Puerto SSH: 11661
+- Puerto MQTT: 21662
+- Puerto App: 31663
+
+## 📚 Referencias
+
+- [Docker Swarm Documentation](https://docs.docker.com/engine/swarm/)
+- [MQTT Protocol](https://mqtt.org/)
+- [gRPC Documentation](https://grpc.io/)
+- [Socket.IO](https://socket.io/)
+- [Google Gemini API](https://ai.google.dev/)
+
+## 📄 Licencia
+
+Este proyecto es parte del Trabajo Final de Sistemas Distribuidos - Universidad Privada Boliviana (UPB)
