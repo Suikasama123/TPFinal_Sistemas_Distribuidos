@@ -1,0 +1,110 @@
+# 🚀 INICIO RÁPIDO - 3 PASOS
+
+## Solo necesitas ejecutar 3 comandos:
+
+### 1️⃣ Subir esta carpeta al cluster
+```bash
+scp -r cluster_swarm/ usuario@10.1.2.166:~
+```
+
+### 2️⃣ Conectarte al cluster
+```bash
+ssh -p 11661 usuario@10.1.2.166
+```
+
+### 3️⃣ Ejecutar el script automático
+```bash
+cd cluster_swarm
+./DEPLOY_AUTO.sh
+```
+
+---
+
+## O paso a paso manual:
+
+```bash
+cd cluster_swarm
+
+# Paso 1: Inicializar Swarm
+./swarm-init.sh
+# Comparte el token con tus compañeros
+
+# Paso 2: Verificar nodos
+docker node ls
+# Debe mostrar 4 nodos
+
+# Paso 3: Build
+./build.sh
+# Espera 5-15 minutos
+
+# Paso 4: Deploy
+./deploy.sh
+
+# Paso 5: Verificar
+./verify-multinode.sh
+
+# Paso 6: Acceder
+# http://10.1.2.166:31793
+```
+
+---
+
+## ✅ API Keys ya configuradas
+
+Las 4 keys de DeepSeek ya están en `config/api_keys.json`:
+- ✅ Worker 1: sk-512624ee943045bdb9bd025191c9105f
+- ✅ Worker 2: sk-2253fe52a184456390e8c715c33abf0d
+- ✅ Worker 3: sk-a5d8adf586c14b5fa13931e7388a2159
+- ✅ Worker 4: sk-04137d3592ec41bf97ffbbfb3e8ab967
+
+**No necesitas editar nada.**
+
+---
+
+## 🎯 ¿Qué hace cada script?
+
+- `DEPLOY_AUTO.sh` → Ejecuta todo automáticamente
+- `swarm-init.sh` → Inicializa Docker Swarm
+- `build.sh` → Construye las imágenes
+- `deploy.sh` → Despliega en el cluster
+- `verify-multinode.sh` → Verifica distribución
+- `stop.sh` → Detiene todo
+- `logs.sh` → Ver logs
+- `monitor.sh` → Monitorear recursos
+
+---
+
+## 📦 Contenido de la carpeta
+
+```
+cluster_swarm/
+├── DEPLOY_AUTO.sh ← EJECUTA ESTO
+├── README.md (documentación completa)
+├── INICIO_RAPIDO.txt (este archivo)
+├── Scripts (.sh)
+├── config/ (con API keys)
+├── master/ (código)
+├── worker-python/
+├── worker-go/
+├── worker-java/
+├── proto/
+├── mosquitto/
+└── docker-compose.yml
+```
+
+---
+
+## ⚠️ IMPORTANTE
+
+**Solo TÚ ejecutas estos comandos en el nodo manager.**
+
+**Tus compañeros solo ejecutan:**
+```bash
+docker swarm join --token SWMTKN-1-xxxxx... 10.1.2.166:2377
+```
+
+---
+
+## 🎉 ¡Listo!
+
+Todo está preparado. Solo sube la carpeta y ejecuta `./DEPLOY_AUTO.sh`

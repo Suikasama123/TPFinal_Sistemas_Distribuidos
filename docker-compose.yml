@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # Broker MQTT
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "21662:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    networks:
+      - ai-network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+  # Master Server (NodeJS)
+  master:
+    image: 10.1.2.179:5000/master:v3
+    ports:
+      - target: 8888
+        published: 31793
+        protocol: tcp
+        mode: host    # Modo host para acceso desde fuera del swarm
+      - target: 50051
+        published: 50051
+        protocol: tcp
+        mode: host
+    environment:
+      - MQTT_BROKER=mqtt://mosquitto:1883
+      - MQTT_PORT=1883
+      - GRPC_PORT=50051
+      - WEB_PORT=8888
+      - MASTER_HOST=master
+      # API Keys como variables de entorno (alternativa al archivo)
+      # Descomenta y configura si prefieres usar env vars
+      # - GEMINI_API_KEY_1=tu_key_1
+      # - GEMINI_API_KEY_2=tu_key_2
+      # - GEMINI_API_KEY_3=tu_key_3
+      # - GEMINI_API_KEY_4=tu_key_4
+    depends_on:
+      - mosquitto
+    networks:
+      - ai-network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+  # Worker Python
+  worker-python:
+    image: 10.1.2.166:5000/worker-python:latest
+    environment:
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
+    depends_on:
+      - mosquitto
+      - master
+    networks:
+      - ai-network
+    deploy:
+      replicas: 4  # 4 replicas = 1 por nodo (4 miembros del grupo)
+      placement:
+        max_replicas_per_node: 1  # Máximo 1 por nodo para distribución
+      restart_policy:
+        condition: on-failure
+
+  # Worker Go
+  worker-go:
+    image: 10.1.2.166:5000/worker-go:latest
+    environment:
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
+    depends_on:
+      - mosquitto
+      - master
+    networks:
+      - ai-network
+    deploy:
+      replicas: 4  # 4 replicas = 1 por nodo (4 miembros del grupo)
+      placement:
+        max_replicas_per_node: 1  # Máximo 1 por nodo para distribución
+      restart_policy:
+        condition: on-failure
+
+  # Worker Java
+  worker-java:
+    image: 10.1.2.166:5000/worker-java:latest
+    environment:
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
+    depends_on:
+      - mosquitto
+      - master
+    networks:
+      - ai-network
+    deploy:
+      replicas: 4  # 4 replicas = 1 por nodo (4 miembros del grupo)
+      placement:
+        max_replicas_per_node: 1  # Máximo 1 por nodo para distribución
+      restart_policy:
+        condition: on-failure
+
+networks:
+  ai-network:
+    driver: overlay
+    attachable: true

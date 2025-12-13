@@ -1,0 +1,52 @@
+{
+  "ai_provider": "multi",
+  "keys": [
+    {
+      "id": "key_1",
+      "provider": "deepseek",
+      "key": "sk-512624ee943045bdb9bd025191c9105f",
+      "owner": "OCHOA MOLINA, CARLOS DANIEL (10.1.2.179)",
+      "enabled": true,
+      "notes": "DeepSeek - Gratis. Obtener en: https://platform.deepseek.com/"
+    },
+    {
+      "id": "key_2",
+      "provider": "deepseek",
+      "key": "sk-2253fe52a184456390e8c715c33abf0d",
+      "owner": "MENESES ZAMBRANA, CRISTIAN RODRIGO (10.1.2.163)",
+      "enabled": true,
+      "notes": "DeepSeek - Gratis. Obtener en: https://platform.deepseek.com/"
+    },
+    {
+      "id": "key_3",
+      "provider": "deepseek",
+      "key": "sk-a5d8adf586c14b5fa13931e7388a2159",
+      "owner": "ZUBIETA HINOJOSA, ANDRE NORVAK (10.1.2.178)",
+      "enabled": true,
+      "notes": "DeepSeek - Gratis. Obtener en: https://platform.deepseek.com/"
+    },
+    {
+      "id": "key_4",
+      "provider": "deepseek",
+      "key": "sk-04137d3592ec41bf97ffbbfb3e8ab967",
+      "owner": "SCHMIDT MARTINEZ, PABLO GERHARD (10.1.2.173)",
+      "enabled": true,
+      "notes": "DeepSeek - Gratis. Obtener en: https://platform.deepseek.com/"
+    }
+  ],
+  "distribution": {
+    "strategy": "round-robin",
+    "fallback_on_error": true
+  },
+  "provider_config": {
+    "deepseek": {
+      "api_url": "https://api.deepseek.com/v1/chat/completions",
+      "model": "deepseek-chat",
+      "max_tokens": 2048
+    },
+    "gemini": {
+      "api_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+      "model": "gemini-pro"
+    }
+  }
+}

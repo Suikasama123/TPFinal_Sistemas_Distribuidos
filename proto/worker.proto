@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package worker;
+
+option go_package = "./pb";
+
+// Servicio para que los Workers envíen resultados al Master
+service WorkerCallback {
+  rpc SendResult(TaskResult) returns (ResultAck);
+}
+
+// Mensaje con el resultado de una tarea
+message TaskResult {
+  string worker_id = 1;
+  string session_id = 2;
+  string original_query = 3;
+  string ai_response = 4;
+  string api_key = 5;
+  int64 processing_time_ms = 6;
+  int64 query_timestamp = 7;
+  int64 completion_timestamp = 8;
+}
+
+// Confirmación de recepción del resultado
+message ResultAck {
+  bool success = 1;
+  string message = 2;
+}
